@@ -268,6 +268,60 @@ ul.items li:last-child { border-bottom: 0; }
   padding: 2px 10px;
   border-radius: 8px;
 }
+.review-wrap { max-width: 640px; margin: 0 auto; padding-inline: 16px; padding-block: 8px 32px; }
+.review {
+  padding: 22px 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 90% 0%, #f6b73c26 0, transparent 50%),
+    linear-gradient(160deg, #1d3140 0%, var(--surface) 100%);
+}
+.review h2 { margin: 0 0 4px; font-family: var(--font-display); font-weight: 400; font-size: 30px; color: var(--sun); }
+.review-lead { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
+.review form { display: grid; gap: 8px; }
+.stars { display: flex; gap: 6px; margin-bottom: 6px; }
+.star {
+  width: 48px; height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+  color: #3a5262;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color .15s, transform .15s, border-color .15s;
+}
+.star.on { color: var(--sun); border-color: #f6b73c88; }
+.star:active { transform: scale(.92); }
+.star:focus-visible, .review textarea:focus-visible, .review input:focus-visible, .send:focus-visible { outline: 2px solid var(--sun); outline-offset: 2px; }
+.review label { font-weight: 700; font-size: 14px; margin-top: 4px; }
+.review .opt { color: var(--muted); font-weight: 400; }
+.review textarea, .review input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 16px;
+  resize: vertical;
+}
+.review-error { margin: 2px 0 0; color: #ff9b85; font-weight: 700; font-size: 14px; }
+.review-send { display: grid; margin-top: 8px; }
+.send {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 15px;
+  text-align: center;
+  text-decoration: none;
+}
+.send.sms { background: var(--sun); color: #1b1305; }
+.review-note { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
 footer {
   max-width: 640px;
   margin: 0 auto;
@@ -300,6 +354,31 @@ footer .brand { font-family: var(--font-display); font-size: 22px; color: var(--
 
 <nav class="cats" aria-label="Разделы меню"><div class="track" id="cats"></div></nav>
 <main id="menu"></main>
+
+<div class="review-wrap">
+  <section class="review" id="otzyv" aria-labelledby="otzyv-title">
+    <h2 id="otzyv-title">Оставить отзыв</h2>
+    <p class="review-lead">Нам важно ваше мнение. Поставьте оценку и напишите пару слов.</p>
+    <form id="review-form" novalidate>
+      <div class="stars" role="radiogroup" aria-label="Оценка">
+        <button type="button" class="star" data-v="1" role="radio" aria-checked="false" aria-label="1 из 5">★</button>
+        <button type="button" class="star" data-v="2" role="radio" aria-checked="false" aria-label="2 из 5">★</button>
+        <button type="button" class="star" data-v="3" role="radio" aria-checked="false" aria-label="3 из 5">★</button>
+        <button type="button" class="star" data-v="4" role="radio" aria-checked="false" aria-label="4 из 5">★</button>
+        <button type="button" class="star" data-v="5" role="radio" aria-checked="false" aria-label="5 из 5">★</button>
+      </div>
+      <label for="review-text">Ваш отзыв</label>
+      <textarea id="review-text" rows="4" maxlength="800" placeholder="Что понравилось, что улучшить?"></textarea>
+      <label for="review-name">Ваше имя <span class="opt">(необязательно)</span></label>
+      <input id="review-name" type="text" maxlength="60" autocomplete="given-name">
+      <p class="review-error" id="review-error" hidden>Поставьте оценку или напишите отзыв.</p>
+      <div class="review-send">
+        <a class="send sms" id="send-sms" href="#">Отправить отзыв по SMS</a>
+      </div>
+      <p class="review-note">Откроется SMS с готовым сообщением на номер кафе 8&nbsp;914&nbsp;440&nbsp;22&nbsp;40. Нажмите «Отправить».</p>
+    </form>
+  </section>
+</div>
 
 <footer>
   <div class="brand">Кафе “Солнечный остров”</div>
@@ -489,7 +568,40 @@ menuEl.innerHTML = MENU.map(sec => `
     }).join("")}</ul>
   </section>`).join("");
 
-catsEl.innerHTML = MENU.map(sec => `<a href="#${sec.id}" data-id="${sec.id}">${esc(sec.short || sec.title)}</a>`).join("");
+catsEl.innerHTML = MENU.map(sec => `<a href="#${sec.id}" data-id="${sec.id}">${esc(sec.short || sec.title)}</a>`).join("")
+  + `<a href="#otzyv" data-id="otzyv">Отзывы</a>`;
+
+// review: build a ready message and open an SMS to the cafe number
+(function () {
+  const PHONE = "79144402240";
+  let rating = 0;
+  const stars = [...document.querySelectorAll(".star")];
+  const text = document.getElementById("review-text");
+  const name = document.getElementById("review-name");
+  const err = document.getElementById("review-error");
+  stars.forEach(s => s.addEventListener("click", () => {
+    rating = +s.dataset.v;
+    stars.forEach(x => {
+      const on = +x.dataset.v <= rating;
+      x.classList.toggle("on", on);
+      x.setAttribute("aria-checked", String(+x.dataset.v === rating));
+    });
+    err.hidden = true;
+  }));
+  function message() {
+    const lines = ["Отзыв о кафе «Солнечный остров»"];
+    if (rating) lines.push("Оценка: " + "★".repeat(rating) + "☆".repeat(5 - rating) + " (" + rating + "/5)");
+    if (name.value.trim()) lines.push("Имя: " + name.value.trim());
+    if (text.value.trim()) lines.push("", text.value.trim());
+    return lines.join("\n");
+  }
+  function go(e, build) {
+    if (!rating && !text.value.trim()) { e.preventDefault(); err.hidden = false; return; }
+    e.currentTarget.href = build(encodeURIComponent(message()));
+  }
+  document.getElementById("send-sms").addEventListener("click", e => go(e, m => `sms:+${PHONE}?&body=${m}`));
+  document.getElementById("review-form").addEventListener("submit", e => e.preventDefault());
+})();
 
 const links = [...catsEl.querySelectorAll("a")];
 function setActive(id) {
