@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="az">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Telefon Sındırıldı?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Single dark look by choice: a fake "breach" screen that resolves into a reveal. */
+:root {
+  --bg: #050403;
+  --red: #ff2f3c;
+  --red-glow: rgba(255,47,60,.5);
+  --green: #39ff7a;
+  --dim: #8a1f26;
+  --display: "VT323", "Courier New", monospace;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--red);
+  font-family: var(--mono); overflow: hidden;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.screen {
+  position: relative; height: 100%;
+  padding-left: max(18px, env(safe-area-inset-left, 0px));
+  padding-right: max(18px, env(safe-area-inset-right, 0px));
+  padding-block: max(22px, env(safe-area-inset-top, 0px)) max(22px, env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box; display: flex; flex-direction: column;
+}
+.screen::after { /* scanlines */
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5;
+  background: repeating-linear-gradient(to bottom, rgba(0,0,0,.25) 0 1px, transparent 1px 3px);
+}
+
+/* ---- phase 1: start button ---- */
+#start {
+  position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 22px; text-align: center;
+  background: var(--bg); padding: 24px;
+}
+#start .lock { font-size: 64px; }
+#start h1 { font-family: var(--display); font-size: 34px; margin: 0; color: #e8e8e8; text-wrap: balance; }
+#start p { color: #7a7a7a; font-size: 14px; max-width: 30ch; line-height: 1.5; margin: 0; }
+#goBtn {
+  font-family: var(--display); font-size: 26px; letter-spacing: .05em;
+  color: var(--bg); background: var(--green); border: 0; border-radius: 10px;
+  padding: 12px 30px; cursor: pointer; box-shadow: 0 0 24px rgba(57,255,122,.4);
+}
+#goBtn:active { transform: scale(.97); }
+
+/* ---- phase 2: the fake breach ---- */
+.breach { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; }
+.skull { font-family: var(--display); text-align: center; color: var(--red);
+  text-shadow: 0 0 14px var(--red-glow); font-size: clamp(42px, 13vw, 90px); line-height: 1;
+  animation: flick 1.6s steps(2) infinite; }
+.title { font-family: var(--display); text-align: center; font-size: clamp(26px, 8vw, 46px);
+  text-shadow: 0 0 12px var(--red-glow); text-wrap: balance; }
+#log {
+  flex: 1; min-height: 0; overflow: hidden; white-space: pre-wrap; word-break: break-word;
+  font-size: 13px; line-height: 1.55; color: #ff6a73; text-shadow: 0 0 6px var(--red-glow);
+}
+#log .ok { color: var(--green); text-shadow: 0 0 6px rgba(57,255,122,.4); }
+#log .warn { color: #ffcc33; }
+.bar { height: 16px; border: 1px solid var(--dim); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--red); box-shadow: 0 0 12px var(--red-glow); }
+.pct { font-family: var(--display); font-size: 22px; text-align: center; }
+
+/* ---- phase 3: the reveal ---- */
+#reveal {
+  position: absolute; inset: 0; z-index: 9; display: none; flex-direction: column;
+  align-items: center; justify-content: center; gap: 20px; text-align: center;
+  background: radial-gradient(ellipse at center, #0a1f12 0%, var(--bg) 85%); padding: 28px;
+}
+#reveal.show { display: flex; animation: pop .4s ease-out; }
+#reveal .emoji { font-size: 80px; animation: wobble 1.2s ease-in-out infinite; }
+#reveal h2 { font-family: var(--display); font-size: clamp(44px, 15vw, 92px); margin: 0;
+  color: var(--green); text-shadow: 0 0 24px rgba(57,255,122,.5); line-height: .95; text-wrap: balance; }
+#reveal p { color: #cfe9d7; font-size: 16px; max-width: 28ch; line-height: 1.55; margin: 0; }
+#reveal small { color: #6f8f7a; font-size: 12px; max-width: 30ch; line-height: 1.5; }
+#againBtn {
+  font-family: var(--mono); font-size: 15px; color: var(--green); background: none;
+  border: 1px solid var(--green); border-radius: 8px; padding: 10px 22px; cursor: pointer;
+}
+#againBtn:active { transform: scale(.97); }
+
+@keyframes flick { 50% { opacity: .35; } }
+@keyframes pop { from { transform: scale(.6); opacity: 0; } }
+@keyframes wobble { 0%,100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .skull, #reveal .emoji, #reveal.show { animation: none; }
+}
+</style>
+
+<div class="screen">
+  <!-- phase 1 -->
+  <div id="start">
+    <div class="lock">🔒</div>
+    <h1>Təhlükəsizlik Yoxlaması</h1>
+    <p>Cihazınızın təhlükəsizliyini yoxlamaq üçün başladın.</p>
+    <button id="goBtn" type="button">BAŞLA</button>
+  </div>
+
+  <!-- phase 2 -->
+  <div class="breach" id="breach" hidden>
+    <div class="skull">[ ! ! ! ]</div>
+    <div class="title">TELEFON SINDIRILDI</div>
+    <div id="log"></div>
+    <div class="bar"><i id="fill"></i></div>
+    <div class="pct" id="pct">0%</div>
+  </div>
+
+  <!-- phase 3 -->
+  <div id="reveal">
+    <div class="emoji">😄</div>
+    <h2>ZARAFAT İDİ!</h2>
+    <p>Heç nə baş vermədi. Telefonun tam təhlükəsizdir.</p>
+    <small>Bu sadəcə zarafat səhifəsidir — heç bir məlumat yığmır, heç nəyə toxunmur.</small>
+    <button id="againBtn" type="button">↻ Yenidən oynat</button>
+  </div>
+</div>
+
+<script>
+const startEl = document.getElementById('start');
+const breachEl = document.getElementById('breach');
+const revealEl = document.getElementById('reveal');
+const logEl = document.getElementById('log');
+const fillEl = document.getElementById('fill');
+const pctEl = document.getElementById('pct');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const rnd = (a, b) => Math.floor(a + Math.random() * (b - a));
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const lines = [
+  ['> Bağlantı quruldu...', 'warn'],
+  ['> İstifadəçi məlumatları oxunur', ''],
+  ['  ✓ Kontaktlar: 247 nəfər', 'ok'],
+  ['  ✓ Şəkillər: 1.3 GB', 'ok'],
+  ['  ✓ Mesajlar sinxronlaşdırılır...', 'ok'],
+  ['> Ön kamera aktivləşdirilir 📷', 'warn'],
+  ['  ✓ Qalereya açıldı', 'ok'],
+  ['> Parollar deşifrə edilir', ''],
+  ['  ✓ instagram ********', 'ok'],
+  ['  ✓ whatsapp   ********', 'ok'],
+  ['> Məkan müəyyən edilir 📍', 'warn'],
+  ['  ✓ GPS: 40.4093° N, 49.8671° E', 'ok'],
+  ['> Məlumatlar köçürülür...', ''],
+];
+
+function type(text, cls) {
+  const s = document.createElement('span');
+  if (cls) s.className = cls;
+  s.textContent = text + '\n';
+  logEl.appendChild(s);
+  // keep only the last lines visible so it never overflows
+  while (logEl.childNodes.length > 11) logEl.removeChild(logEl.firstChild);
+}
+
+async function vibrate(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+async function runBreach() {
+  startEl.hidden = true;
+  breachEl.hidden = false;
+  vibrate([0, 80, 40, 80]);
+
+  // stream the scary lines
+  for (const [t, c] of lines) {
+    type(t, c);
+    await sleep(reduce ? 120 : rnd(240, 520));
+  }
+
+  // progress bar to 100%
+  const dur = reduce ? 600 : 2600;
+  const t0 = performance.now();
+  await new Promise(res => {
+    (function step(now) {
+      const p = Math.min(1, (now - t0) / dur);
+      const pct = Math.round(p * 100);
+      fillEl.style.width = pct + '%';
+      pctEl.textContent = pct + '%';
+      if (p < 1) requestAnimationFrame(step); else res();
+    })(t0);
+  });
+
+  await sleep(300);
+  vibrate([0, 200]);
+  revealEl.classList.add('show');
+}
+
+function reset() {
+  revealEl.classList.remove('show');
+  breachEl.hidden = true;
+  logEl.textContent = '';
+  fillEl.style.width = '0';
+  pctEl.textContent = '0%';
+  startEl.hidden = false;
+}
+
+document.getElementById('goBtn').addEventListener('click', runBreach);
+document.getElementById('againBtn').addEventListener('click', reset);
+</script>
+
+</html>
